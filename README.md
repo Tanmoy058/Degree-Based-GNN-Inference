@@ -1,0 +1,1 @@
+# Degree-Based-GNN-Inference
