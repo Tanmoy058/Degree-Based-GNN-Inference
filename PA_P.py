@@ -35,7 +35,7 @@ TIMEOUT = 200
 
 
 def client(max_id, number_of_requests, arrival_model, arrival_rate, HOST, PORT, WIDTH, LAST, verbose):
-    CVs = np.array([1, 1])
+    CVs = np.array([3, 3])
     transition_ps = np.array([0.01, 0.01])
     if arrival_model == 'bursty':
         request_rates = np.array([1, 2])
@@ -54,7 +54,7 @@ def client(max_id, number_of_requests, arrival_model, arrival_rate, HOST, PORT, 
         print('Client: Generating the trace ...')
     input_queue = np.zeros(1000000, dtype = np.int64)    
     input_queue[:] = rng.choice(max_id, size = input_queue.shape[0], replace = True)
-    fn = 'PA_load.pkl'
+    fn = '../PA_load.pkl'
     with open(fn, 'rb') as f:
         [input_queue, load] = pickle.load(f)
     input_queue = input_queue[0:number_of_requests]
@@ -600,7 +600,7 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
     failure = False
     n1 = 0
     n2 = 0
-    input_features = torch.empty((max(int(chunk_size/3.5)+ 5000000, 5000000), feats.shape[1]), dtype = feats.dtype, device = 'cuda:0')
+    input_features = torch.empty((max(int(chunk_size/4.5)+ 3000000, 5000000), feats.shape[1]), dtype = feats.dtype, device = 'cuda:0')
     torch.cuda.synchronize()
     torch.cuda.reset_peak_memory_stats()
     barrier.wait()
@@ -726,7 +726,7 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
         #max_mem[0] = mem_usage[int(len(mem_usage)) - 2]
         avg_lat = ((torch.mean(((response_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
         avg_q = ((torch.mean(((dispatch_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
-        if (e < l/1000):
+        if True:
             lat[0] = ((torch.mean(((response_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
             lat[1] = dist[int(dist.shape[0]*(0.99))].to(dtype = torch.float)
             lat[2] = ((torch.mean(((dispatch_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
@@ -738,7 +738,6 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
             lat[8] = l/n2
             print('Server: average latency = ', [lat[0].item(), avg_q.item()], '(ms) failures =', [e, e0, e1], [Ts, Tt, Ti], n1, n2, sampler.t_c, mem_m/1024/1024)
         else:
-            lat[0] = 9999999
             print('failure too many dropped requests. ', l, [e, e0, e1]) 
             print('Server: average latency = ', lat[0].item(), '(ms) failures =', [e, e0, e1], [Ts, Tt, Ti], n1, n2, sampler.t_c, mem_m/1024/1024)
     #print(hr, hr[1].cpu().item()/hr[0].cpu().item())
@@ -993,6 +992,7 @@ def sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual
     else:
         p = max(min(degs_q.shape[0], max_bs), 1)
     pointers[1] = pointers[1] + p
+
 
 
 
@@ -1295,7 +1295,7 @@ if __name__ == '__main__':
     num_trials = 5
     pipeline = False
     graph_name = 'ogbn-papers100M'
-    file_name = 'sens_PA_P.pkl'
+    file_name = 'cnds_PA_P.pkl'
     with open(file_name, 'rb') as f:
         cnds = pickle.load(f)
     file_name = '../dataset/PA.pkl'
@@ -1308,24 +1308,21 @@ if __name__ == '__main__':
     lat.share_memory_()
    
     
-    cnds1 = torch.zeros((2, cnds.shape[1], 4), dtype=torch.long)
-    #arrival_rates = [100, 300, 340, 380, 480, 530, 550, 560, 570, 580]
-    arrival_rates = [200]
+    arrival_rates = [150]
     res = torch.zeros((len(arrival_rates), 10), dtype = torch.float)
     temp = torch.zeros(cnds.shape[1], 9)
-    k = 0
     for i in range(len(arrival_rates)):
         print('\n')
         avg = []
         tail = []
-        arrival_rate = arrival_rates[0]
-        for j in range(int(cnds.shape[1]/len(arrival_rates))):
+        arrival_rate = arrival_rates[i]
+        for j in range(cnds.shape[1]):
             lat[0] = 999999
             lat[1] = 999999
-            cnd = torch.squeeze(cnds[0, k, :])
+            cnd = torch.squeeze(cnds[0, j, :])
             chunk_size = int(cnd[1].item())
             opt = cnd[0].item()
-            cache_size = 0.96*(torch.cuda.get_device_properties(0).total_memory) - cnd[2].item()
+            cache_size = 1.00*(torch.cuda.get_device_properties(0).total_memory) - cnd[2].item()
             cache_size = int(cache_size/(feats.shape[1] * feats.element_size()))
             number_of_requests = 100 * arrival_rate
             if (cache_size > 0) and (j > -1) and (j < cnds.shape[1]):
@@ -1335,23 +1332,18 @@ if __name__ == '__main__':
                 p.join()
                 print(lat)
                 a = 0
-            cnds1[0, k, 0] = int(opt)
-            cnds1[0, k, 1] = int(chunk_size)
-            cnds1[0, k, 2] = int(cnd[2].item())
-            cnds1[0, k, 3] = int(lat[0].item()*1000)
-            #temp[k,:] = lat[:]
-            #avg.append(lat[0].item())
-            #tail.append(lat[1].item())
-            k += 1
+            temp[j,:] = lat[:]
+            avg.append(lat[0].item())
+            tail.append(lat[1].item())
             #
-        #avg = np.array(avg)
-        #argmin = np.argmin(avg)
-        #res[i, 0] = argmin
-        #res[i, 1:] = temp[argmin,:]
+        avg = np.array(avg)
+        argmin = np.argmin(avg)
+        res[i, 0] = argmin
+        res[i, 1:] = temp[argmin,:]
         #print(res[i])
-    file_name = "cnds_PA_P_SAGE.pkl"
-    with open (file_name, 'wb') as f:
-        pickle.dump(cnds1, f) 
+    #file_name = "res_PA_P_SAGE.pkl"
+    #with open (file_name, 'wb') as f:
+        #pickle.dump(res, f) 
             
             
             
@@ -1360,30 +1352,30 @@ if __name__ == '__main__':
             
             
 
- 
+
     print('\n\n\n')
-    file_name = 'sens_PA_P.pkl'
+    file_name = 'cnds_PA_P.pkl'
     with open(file_name, 'rb') as f:
         cnds = pickle.load(f)
     GNN = 'GAT'
-    #arrival_rates = [20, 40, 60, 70, 80, 90, 100, 110]
-    arrival_rates = [30]
+    arrival_rates = [35]
+    arrival_rates = []
     res = torch.zeros((len(arrival_rates), 10), dtype = torch.float)
     temp = torch.zeros(cnds.shape[1], 9)
-    k = 0
     for i in range(len(arrival_rates)):
         print('\n')
         avg = []
         tail = []
-        arrival_rate = arrival_rates[0]
-        for j in range(int(cnds.shape[1]/len(arrival_rates))):
+        arrival_rate = arrival_rates[i]
+        for j in range(cnds.shape[1]):
             lat[0] = 999999
             lat[1] = 999999
-            cnd = torch.squeeze(cnds[1, k, :])
+            cnd = torch.squeeze(cnds[1, j, :])
             chunk_size = int(cnd[1].item())
             opt = cnd[0].item()
             cache_size = 0.93*(torch.cuda.get_device_properties(0).total_memory) - cnd[2].item()
             cache_size = int(cache_size/(feats.shape[1] * feats.element_size()))
+            cache_size = max(cache_size, 1000000)
             number_of_requests = 100 * arrival_rate
             if (cache_size > 0) and (j > -1) and (j < cnds.shape[1]):
                 print(arrival_rate, 'sort, ', opt, chunk_size, cache_size, GNN)
@@ -1391,24 +1383,20 @@ if __name__ == '__main__':
                 p.start()
                 p.join()
                 print(lat)
-                a = 0
-            cnds1[1, k, 0] = int(opt)
-            cnds1[1, k, 1] = int(chunk_size)
-            cnds1[1, k, 2] = int(cnd[2].item())
-            cnds1[1, k, 3] = int(lat[0].item()*1000)
-            #temp[k,:] = lat[:]
-            #avg.append(lat[0].item())
-            #tail.append(lat[1].item())
-            k += 1
-            #
-        #avg = np.array(avg)
-        #argmin = np.argmin(avg)
-        #res[i, 0] = argmin
-        #res[i, 1:] = temp[argmin,:]
-        #print(res[i])
-    file_name = "cnds_PA_P_GAT.pkl"
-    with open (file_name, 'wb') as f:
-        pickle.dump(cnds1, f) 
+            temp[j,:] = lat[:]
+            avg.append(lat[0].item())
+            tail.append(lat[1].item())
+            #print(lat)
+        avg = np.array(avg)
+        argmin = np.argmin(avg)
+        res[i, 0] = argmin
+        res[i, 1:] = temp[argmin,:]
+        print(res[i])
+    #file_name = "res_PA_P_GAT.pkl"
+    #with open (file_name, 'wb') as f:
+        #pickle.dump(res, f) 
+       
+
             
             
 

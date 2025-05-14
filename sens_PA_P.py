@@ -684,7 +684,7 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
     mem_usage.sort()
         #print('max memory usage = ', mem_usage[int(len(mem_usage)*0.995)])
     print('Server: average latency = ', int(np.mean(torch.bitwise_right_shift(response_times - arrival_times_actual, 20).detach().numpy())), '(ms) failures =', e, [Ts, Tt, Ti], n1, n2, sampler.t_c)
-    if e>=l/100:
+    if e>=l/10:
         failure = True
     if not(failure):
         max_mem[0] = mem_usage[int(len(mem_usage)) - 2]
@@ -873,10 +873,10 @@ if __name__ == '__main__':
     num_trials = 5
     pipeline = False
     graph_name = 'ogbn-papers100M'
-    file_name = 'pcts_PA_P.pkl'
+    file_name = '../pcts_PA_P.pkl'
     with open(file_name, 'rb') as f:
         pcts = pickle.load(f)
-    file_name = 'dataset/PA.pkl'
+    file_name = '../dataset/PA.pkl'
     with open(file_name, 'rb') as f:
         [graph_a, feats] = pickle.load(f)
     graph = graph_a.formats(formats = 'csc')
@@ -885,12 +885,12 @@ if __name__ == '__main__':
     
     number_of_requests = 5000
     opts = list(pcts.keys())
-    cnds = torch.zeros((2,30, 3), dtype = torch.long)
+    cnds = torch.zeros((2,50, 3), dtype = torch.long)
     max_mem = torch.zeros(1, dtype = torch.long)
     max_mem.share_memory_()
     base_config = [150, 200, 1000000, False, 5000000, 10500000]
     j = 0
-    for i in range(1,4):
+    for i in range(0,5):
         for k in range(10):
             pct_tar = 0.75 + 0.02*k
             max_mem[0] = 999999999999
@@ -918,7 +918,7 @@ if __name__ == '__main__':
     GNN = 'GAT'
     j = 0
     base_config = [35, 200, 1000000, False, 5000000, 10500000]
-    for i in range(0,3):
+    for i in range(0,5):
         for k in range(10):
             pct_tar = 0.96 + 0.0030*k
             max_mem[0] = 999999999999

@@ -1,0 +1,350 @@
+(base) -bash-4.4$python3 th_FR.py && python3 th_PA.py && python3 FR_th.py && python3 PA_th.py
+[300, 400, 1000000, False, 4256734, 10500000]
+Server: average latency =  22959 (ms) failures = 0 [4.595089484937489, 52.02879624487832, 5.042169661261141] 390 800 2.427265167236328
+max memory usage =  tensor(12361198592)
+[300, 400, 1000000, False, 7449284, 10500000]
+Server: average latency =  20019 (ms) failures = 0 [4.11196203250438, 47.05706995120272, 4.760410014074296] 391 550 2.022005319595337
+max memory usage =  tensor(13933974016)
+[300, 400, 1000000, False, 10641835, 10500000]
+Server: average latency =  18164 (ms) failures = 0 [3.93069149274379, 44.22165909316391, 4.569412787910551] 391 464 1.8596887588500977
+max memory usage =  tensor(15185782784)
+[300, 400, 1000000, False, 13834385, 10500000]
+Server: average latency =  17247 (ms) failures = 0 [3.8279942185617983, 42.623896106146276, 4.429115451872349] 391 430 1.7717370986938477
+max memory usage =  tensor(16647034880)
+[300, 400, 1000000, False, 17026936, 10500000]
+Server: average latency =  17038 (ms) failures = 0 [3.830287240445614, 42.12529476871714, 4.4622824331745505] 391 423 1.7822906970977783
+max memory usage =  tensor(17753773056)
+[90, 200, 1000000, False, 6649037, 10500000]
+Server: average latency =  17791 (ms) failures = 0 [5.9426934835501015, 60.59827042976394, 21.71655006846413] 772 906 3.1397933959960938
+max memory usage =  tensor(17839211520)
+[90, 200, 1000000, False, 11635815, 10500000]
+Server: average latency =  14706 (ms) failures = 0 [5.700990551151335, 56.69467101339251, 20.440997310448438] 772 820 2.8980157375335693
+max memory usage =  tensor(20871370240)
+[90, 200, 1000000, False, 16622593, 10500000]
+Server: average latency =  14048 (ms) failures = 0 [5.639657149091363, 55.7362775541842, 20.175096311606467] 772 799 2.831277370452881
+max memory usage =  tensor(23409961984)
+[90, 200, 1000000, False, 21609370, 10500000]
+Server: average latency =  13295 (ms) failures = 0 [5.628255483694375, 54.655429921112955, 19.865064966026694] 772 786 2.798299789428711
+max memory usage =  tensor(26016038912)
+[90, 200, 1000000, False, 26596148, 10500000]
+Server: average latency =  13161 (ms) failures = 0 [5.547234859783202, 54.55099990172312, 19.846010306850076] 772 782 2.774371385574341
+max memory usage =  tensor(28603034112)
+[150, 200, 1000000, False, 6049735, 10500000]
+Server: average latency =  24282 (ms) failures = 0 [11.621269861701876, 66.79801795491949, 7.301873341668397] 823 1327 5.756879806518555
+max memory usage =  tensor(9896948736)
+[150, 200, 1000000, False, 9074603, 10500000]
+Server: average latency =  21220 (ms) failures = 0 [11.00034292647615, 61.34860321180895, 7.044805434066802] 823 1061 5.165103435516357
+max memory usage =  tensor(11316363776)
+[150, 200, 1000000, False, 12099471, 10500000]
+Server: average latency =  19488 (ms) failures = 0 [10.683539812453091, 57.797191500198096, 6.9661238244734704] 823 939 4.871040105819702
+max memory usage =  tensor(11854444544)
+[150, 200, 1000000, False, 15124338, 10500000]
+Server: average latency =  18415 (ms) failures = 0 [10.478509064763784, 55.792549055069685, 6.822690247558057] 823 894 4.743038654327393
+max memory usage =  tensor(12349587456)
+[150, 200, 1000000, False, 18149206, 10500000]
+Server: average latency =  17899 (ms) failures = 0 [10.415074097923934, 54.706075191963464, 6.819478838704526] 823 869 4.687872648239136
+max memory usage =  tensor(13125868544)
+[35, 100, 1000000, False, 7617209, 10500000]
+Server: average latency =  13737 (ms) failures = 0 [15.289159577339888, 74.28728648321703, 86.84095050487667] 1545 1780 7.457554578781128
+max memory usage =  tensor(16988165632)
+[35, 100, 1000000, False, 13330116, 10500000]
+Server: average latency =  9588 (ms) failures = 0 [14.871366523206234, 69.53278623055667, 82.91371103562415] 1546 1617 7.039421319961548
+max memory usage =  tensor(20491132416)
+[35, 100, 1000000, False, 19043024, 10500000]
+Server: average latency =  7072 (ms) failures = 0 [14.629506601952016, 66.91224557207897, 80.1133833359927] 1545 1565 6.854555606842041
+max memory usage =  tensor(24613595136)
+[35, 100, 1000000, False, 24755931, 10500000]
+Server: average latency =  6399 (ms) failures = 0 [14.60366511810571, 65.93769222358242, 79.43215736886486] 1546 1550 6.8465211391448975
+max memory usage =  tensor(25562698240)
+[35, 100, 1000000, False, 30468838, 10500000]
+Server: average latency =  6175 (ms) failures = 0 [14.61519300751388, 65.64555711625144, 79.47187922894955] 1545 1546 6.822109699249268
+max memory usage =  tensor(26425188864)
+
+
+400 sort,  400 4256734 27570956 SAGE
+Server: average latency =  [218.6786651611328, 193.68093872070312] (ms) failures = [2, 1, 1] [34.797882517334074, 28.785924891475588, 32.68140269163996] 3688 6864 18.8739492893219 39377.373046875
+tensor([ 218.6787, 1107.6091,  193.6809,    1.1080,   34.7979,    0.0000,
+          28.7859,   32.6814,    5.8274])
+400 sort,  400 7449284 26035043 SAGE
+Server: average latency =  [62.18901824951172, 40.83140563964844] (ms) failures = [1, 1, 0] [34.05646683834493, 26.76478376472369, 33.11578454822302] 4368 5574 17.225200653076172 39144.552734375
+tensor([ 62.1890, 618.0109,  40.8314,   1.1987,  34.0565,   0.0000,  26.7648,
+         33.1158,   7.1760])
+400 sort,  400 10641835 24812573 SAGE
+Server: average latency =  [55.07726287841797, 34.270355224609375] (ms) failures = [1, 0, 1] [33.78096798155457, 26.095005613286048, 33.461067063733935] 4579 5176 16.66551685333252 39063.16943359375
+tensor([ 55.0773, 500.0151,  34.2704,   1.2242,  33.7810,   0.0000,  26.0950,
+         33.4611,   7.7278])
+400 sort,  400 13834385 23385569 SAGE
+Server: average latency =  [55.94449996948242, 35.38701248168945] (ms) failures = [0, 0, 0] [33.39194657560438, 26.303048130124807, 33.48666409449652] 4659 5004 16.331373929977417 38868.72412109375
+tensor([ 55.9445, 525.0995,  35.3870,   1.2300,  33.3919,   0.0000,  26.3030,
+         33.4867,   7.9934])
+400 sort,  400 17026936 22304770 SAGE
+Server: average latency =  [57.15398025512695, 36.63188934326172] (ms) failures = [0, 0, 0] [33.21499438630417, 26.83694179309532, 33.34939380828291] 4662 4905 16.24482274055481 38850.8115234375
+tensor([ 57.1540, 611.4022,  36.6319,   1.2636,  33.2150,   0.0000,  26.8369,
+         33.3494,   8.1547])
+tensor([  2.0000,  55.0773, 500.0151,  34.2704,   1.2242,  33.7810,   0.0000,
+         26.0950,  33.4611,   7.7278])
+
+
+
+
+
+
+80 sort,  200 6649037 20982508 GAT
+Server: average latency =  [351.70379638671875, 308.64837646484375] (ms) failures = [2, 0, 2] [12.195492999162525, 7.738303507678211, 65.95560184167698] 1806 2021 6.667223215103149 36613.3154296875
+tensor([3.5170e+02, 1.7951e+03, 3.0865e+02, 4.4893e-01, 1.2195e+01, 0.0000e+00,
+        7.7383e+00, 6.5956e+01, 3.9579e+00])
+80 sort,  200 11635815 18021415 GAT
+Server: average latency =  [193.80633544921875, 156.2697296142578] (ms) failures = [5, 0, 5] [12.682736336719245, 8.605752652976662, 55.14217794826254] 2012 2082 6.803408622741699 35696.5888671875
+tensor([1.9381e+02, 1.2935e+03, 1.5627e+02, 5.0989e-01, 1.2683e+01, 0.0000e+00,
+        8.6058e+00, 5.5142e+01, 3.8420e+00])
+80 sort,  200 16622593 15542322 GAT
+Server: average latency =  [209.65426635742188, 171.3600311279297] (ms) failures = [5, 0, 5] [12.380598365329206, 10.253322519827634, 55.77795455697924] 1948 1985 6.560654640197754 37193.94287109375
+tensor([2.0965e+02, 1.3005e+03, 1.7136e+02, 4.9778e-01, 1.2381e+01, 0.0000e+00,
+        1.0253e+01, 5.5778e+01, 4.0297e+00])
+80 sort,  200 21609370 12997325 GAT
+Server: average latency =  [375.0060119628906, 331.61627197265625] (ms) failures = [3, 0, 3] [11.525700064375997, 13.080924522597343, 61.73917940584943] 1792 1818 6.030277967453003 37804.7099609375
+tensor([3.7501e+02, 1.9113e+03, 3.3162e+02, 4.6212e-01, 1.1526e+01, 0.0000e+00,
+        1.3081e+01, 6.1739e+01, 4.3999e+00])
+80 sort,  200 26596148 10470962 GAT
+Server: average latency =  [478.8082275390625, 432.53424072265625] (ms) failures = [2, 0, 2] [11.082772639580071, 17.509765699505806, 60.75851234747097] 1707 1723 5.784147024154663 37863.42236328125
+tensor([4.7881e+02, 1.8394e+03, 4.3253e+02, 4.4518e-01, 1.1083e+01, 0.0000e+00,
+        1.7510e+01, 6.0759e+01, 4.6425e+00])
+tensor([1.0000e+00, 1.9381e+02, 1.2935e+03, 1.5627e+02, 5.0989e-01, 1.2683e+01,
+        0.0000e+00, 8.6058e+00, 5.5142e+01, 3.8420e+00])
+
+
+400 sort,  200 6049735 59954901 SAGE
+Server: average latency =  [14421.337890625, 14386.857421875] (ms) failures = [2, 1, 1] [79.84891706285998, 72.2927074288018, 42.482404549606144] 6221 9959 38.56730675697327 39235.26220703125
+tensor([1.4421e+04, 1.6249e+05, 1.4387e+04, 1.5123e+01, 7.9849e+01, 0.0000e+00,
+        7.2293e+01, 4.2482e+01, 4.0164e+00])
+400 sort,  200 9074603 57182606 SAGE
+^CProcess Process-2:2:
+Process Process-2:1:
+Process Process-2:3:
+Traceback (most recent call last):
+  File "/sfs/weka/scratch/mez4em/inference_paper_mlsys_post/sens/PA_th.py", line 1332, in <module>
+Traceback (most recent call last):
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/sfs/weka/scratch/mez4em/inference_paper_mlsys_post/sens/PA_th.py", line 583, in inference
+    time.sleep(5)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/sfs/weka/scratch/mez4em/inference_paper_mlsys_post/sens/PA_th.py", line 94, in client
+    s.connect((HOST, PORT))
+ConnectionRefusedError: [Errno 111] Connection refused
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/sfs/weka/scratch/mez4em/inference_paper_mlsys_post/sens/PA_th.py", line 100, in client
+    time.sleep(1)
+KeyboardInterrupt
+Traceback (most recent call last):
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/sfs/weka/scratch/mez4em/inference_paper_mlsys_post/sens/PA_th.py", line 180, in request_handler
+    barrier.wait()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/threading.py", line 668, in wait
+    self._wait(timeout)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/threading.py", line 703, in _wait
+    if not self._cond.wait_for(lambda : self._state != 0, timeout):
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/synchronize.py", line 313, in wait_for
+    self.wait(waittime)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/synchronize.py", line 261, in wait
+    return self._wait_semaphore.acquire(True, timeout)
+KeyboardInterrupt
+    p.join()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 149, in join
+    res = self._popen.wait(timeout)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/popen_fork.py", line 43, in wait
+    return self.poll(os.WNOHANG if timeout == 0.0 else 0)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/popen_fork.py", line 27, in poll
+    pid, sts = os.waitpid(self.pid, flag)
+KeyboardInterrupt
+^CProcess Process-2:
+Traceback (most recent call last):
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/sfs/weka/scratch/mez4em/inference_paper_mlsys_post/sens/PA_th.py", line 1248, in main
+    client_process.join()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 149, in join
+    res = self._popen.wait(timeout)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/popen_fork.py", line 43, in wait
+    return self.poll(os.WNOHANG if timeout == 0.0 else 0)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/popen_fork.py", line 27, in poll
+    pid, sts = os.waitpid(self.pid, flag)
+KeyboardInterrupt
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 317, in _bootstrap
+    util._exit_function()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/util.py", line 357, in _exit_function
+    p.join()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 149, in join
+    res = self._popen.wait(timeout)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/popen_fork.py", line 43, in wait
+    return self.poll(os.WNOHANG if timeout == 0.0 else 0)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/popen_fork.py", line 27, in poll
+    pid, sts = os.waitpid(self.pid, flag)
+KeyboardInterrupt
+Exception ignored in atexit callback: <function _exit_function at 0x7fe428ceb5b0>
+Traceback (most recent call last):
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/util.py", line 357, in _exit_function
+    p.join()
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/process.py", line 149, in join
+    res = self._popen.wait(timeout)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/popen_fork.py", line 43, in wait
+    return self.poll(os.WNOHANG if timeout == 0.0 else 0)
+  File "/scratch/mez4em/anaconda3/lib/python3.10/multiprocessing/popen_fork.py", line 27, in poll
+    pid, sts = os.waitpid(self.pid, flag)
+KeyboardInterrupt: 
+
+(base) -bash-4.4$python3 PA_th.py
+^CTraceback (most recent call last):
+  File "/sfs/weka/scratch/mez4em/inference_paper_mlsys_post/sens/PA_th.py", line 2, in <module>
+    import dgl
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/__init__.py", line 16, in <module>
+    from . import (
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/dataloading/__init__.py", line 13, in <module>
+    from .dataloader import *
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/dataloading/dataloader.py", line 27, in <module>
+    from ..distributed import DistGraph
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/distributed/__init__.py", line 5, in <module>
+    from .dist_graph import DistGraph, DistGraphServer, edge_split, node_split
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/distributed/dist_graph.py", line 11, in <module>
+    from .. import backend as F, graphbolt as gb, heterograph_index
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/graphbolt/__init__.py", line 40, in <module>
+    from .minibatch import *
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/graphbolt/minibatch.py", line 12, in <module>
+    from .internal import get_attributes
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/graphbolt/internal/__init__.py", line 2, in <module>
+    from .utils import *
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/dgl-2.2-py3.10-linux-x86_64.egg/dgl/graphbolt/internal/utils.py", line 10, in <module>
+    import pandas as pd
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/pandas/__init__.py", line 22, in <module>
+    from pandas.compat import is_numpy_dev as _is_numpy_dev  # pyright: ignore # noqa:F401
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/pandas/compat/__init__.py", line 18, in <module>
+    from pandas.compat.numpy import (
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/pandas/compat/numpy/__init__.py", line 4, in <module>
+    from pandas.util.version import Version
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/pandas/util/__init__.py", line 2, in <module>
+    from pandas.util._decorators import (  # noqa:F401
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/pandas/util/_decorators.py", line 14, in <module>
+    from pandas._libs.properties import cache_readonly
+  File "/scratch/mez4em/anaconda3/lib/python3.10/site-packages/pandas/_libs/__init__.py", line 13, in <module>
+    from pandas._libs.interval import Interval
+  File "pandas/_libs/interval.pyx", line 1, in init pandas._libs.interval
+  File "pandas/_libs/hashtable.pyx", line 1, in init pandas._libs.hashtable
+  File "<frozen importlib._bootstrap>", line 404, in parent
+KeyboardInterrupt
+^C
+(base) -bash-4.4$^C
+(base) -bash-4.4$killall -9 python3
+python3: no process found
+(base) -bash-4.4$python3 PA_th.py
+
+
+150 sort,  200 6049735 59954901 SAGE
+Server: average latency =  [68.1840591430664, 38.814083099365234] (ms) failures = [1, 1, 0] [35.45350327901542, 28.22086986992508, 18.672282699029893] 3369 4700 17.349828481674194 37467.29736328125
+tensor([ 68.1841, 564.6165,  38.8141,   0.8151,  35.4535,   0.0000,  28.2209,
+         18.6723,   3.1913])
+150 sort,  200 9074603 57182606 SAGE
+Server: average latency =  [64.89671325683594, 36.07522964477539] (ms) failures = [1, 1, 0] [33.74231803137809, 29.18361195642501, 18.434758922550827] 3410 3992 15.787124156951904 36668.357421875
+tensor([ 64.8967, 518.1025,  36.0752,   0.8094,  33.7423,   0.0000,  29.1836,
+         18.4348,   3.7573])
+150 sort,  200 12099471 56131667 SAGE
+Server: average latency =  [62.85746383666992, 34.548316955566406] (ms) failures = [0, 0, 0] [33.19464541086927, 29.51271823560819, 18.285374591127038] 3437 3749 15.2306649684906 36682.74072265625
+tensor([ 62.8575, 485.9796,  34.5483,   0.8042,  33.1946,   0.0000,  29.5127,
+         18.2854,   4.0008])
+150 sort,  200 15124338 55164591 SAGE
+Server: average latency =  [64.51786804199219, 35.56788635253906] (ms) failures = [0, 0, 0] [33.04082636302337, 30.095427609514445, 18.419048075564206] 3405 3602 15.018421411514282 36694.2734375
+tensor([ 64.5179, 520.8220,  35.5679,   0.8389,  33.0408,   0.0000,  30.0954,
+         18.4190,   4.1641])
+150 sort,  200 18149206 53648417 SAGE
+Server: average latency =  [66.86461639404297, 37.26307678222656] (ms) failures = [0, 0, 0] [32.735046009067446, 31.20933444937691, 18.432686644606292] 3363 3473 14.700343608856201 36418.32275390625
+tensor([ 66.8646, 547.4058,  37.2631,   0.8223,  32.7350,   0.0000,  31.2093,
+         18.4327,   4.3187])
+
+
+
+
+
+
+35 sort,  100 7617209 43627215 GAT
+Server: average latency =  [511.5206604003906, 428.87115478515625] (ms) failures = [7, 0, 7] [10.764202885329723, 11.704531425610185, 72.61817965609953] 1174 1327 5.297170639038086 37413.9609375
+tensor([5.1152e+02, 2.0915e+03, 4.2887e+02, 2.9048e-01, 1.0764e+01, 0.0000e+00,
+        1.1705e+01, 7.2618e+01, 2.6368e+00])
+35 sort,  100 13330116 36785483 GAT
+Server: average latency =  [396.927734375, 317.8607482910156] (ms) failures = [0, 0, 0] [10.649225501343608, 14.125129318330437, 66.67821375932544] 1193 1241 5.108249664306641 38077.57666015625
+tensor([3.9693e+02, 1.9192e+03, 3.1786e+02, 2.9380e-01, 1.0649e+01, 0.0000e+00,
+        1.4125e+01, 6.6678e+01, 2.8195e+00])
+35 sort,  100 19043024 28733798 GAT
+Server: average latency =  [344.9848937988281, 264.4379577636719] (ms) failures = [3, 0, 3] [10.595805015414953, 17.994007599540055, 61.68093807203695] 1208 1220 5.048883438110352 37078.60693359375
+tensor([3.4498e+02, 1.6664e+03, 2.6444e+02, 3.0682e-01, 1.0596e+01, 0.0000e+00,
+        1.7994e+01, 6.1681e+01, 2.8680e+00])
+35 sort,  100 24755931 26880081 GAT
+Server: average latency =  [331.2954406738281, 252.00331115722656] (ms) failures = [3, 0, 3] [10.399945203214884, 18.978231323417276, 61.06794078508392] 1187 1191 4.923444747924805 37105.97900390625
+tensor([3.3130e+02, 1.6195e+03, 2.5200e+02, 2.9505e-01, 1.0400e+01, 0.0000e+00,
+        1.8978e+01, 6.1068e+01, 2.9379e+00])
+35 sort,  100 30468838 25195529 GAT
+Server: average latency =  [370.8533630371094, 289.0261535644531] (ms) failures = [1, 0, 1] [10.439141645561904, 19.943254969548434, 60.80601806240156] 1200 1201 4.95713996887207 37211.06396484375
+tensor([3.7085e+02, 1.7071e+03, 2.8903e+02, 2.9549e-01, 1.0439e+01, 0.0000e+00,
+        1.9943e+01, 6.0806e+01, 2.9134e+00])
+tensor([3.0000e+00, 3.3130e+02, 1.6195e+03, 2.5200e+02, 2.9505e-01, 1.0400e+01,
+        0.0000e+00, 1.8978e+01, 6.1068e+01, 2.9379e+00])
+(base) -bash-4.4$
+
+
+
+
+
+
+
+
+
+
+
+
+
+(base) -bash-4.4$python3 FR_th.py
+
+
+350 sort,  400 4256734 27570956 SAGE
+Server: average latency =  [56.748775482177734, 34.33890914916992] (ms) failures = [15, 14, 1] [33.76358484942466, 25.870783352293074, 30.85305305942893] 4195 6841 18.299829483032227 39140.29345703125
+tensor([ 56.7488, 393.2560,  34.3389,   1.0891,  33.7636,   0.0000,  25.8708,
+         30.8531,   5.1161])
+350 sort,  400 7449284 26038006 SAGE
+Server: average latency =  [47.75870895385742, 27.723480224609375] (ms) failures = [1, 1, 0] [32.84013956459239, 24.102466810960323, 30.97862980561331] 4694 5741 16.788100242614746 39128.3369140625
+tensor([ 47.7587, 341.1103,  27.7235,   1.1720,  32.8401,   0.0000,  24.1025,
+         30.9786,   6.0963])
+350 sort,  400 10641835 24815459 SAGE
+Server: average latency =  [43.71083450317383, 24.41216468811035] (ms) failures = [1, 0, 1] [32.57803455600515, 23.63872677832842, 31.040704345330596] 4860 5390 16.348041772842407 38997.55517578125
+tensor([ 43.7108, 342.5011,  24.4122,   1.2080,  32.5780,   0.0000,  23.6387,
+         31.0407,   6.4933])
+350 sort,  400 13834385 23386494 SAGE
+Server: average latency =  [42.81720733642578, 23.663719177246094] (ms) failures = [0, 0, 0] [32.29595896182582, 23.781434144359082, 31.094842314720154] 4943 5248 16.111092805862427 38869.80517578125
+tensor([ 42.8172, 318.2837,  23.6637,   1.1322,  32.2960,   0.0000,  23.7814,
+         31.0948,   6.6690])
+350 sort,  400 17026936 22306497 SAGE
+Server: average latency =  [44.37786865234375, 25.118520736694336] (ms) failures = [0, 0, 0] [32.28057541139424, 24.27033275878057, 30.98041284829378] 4929 5144 16.091029405593872 38974.95703125
+tensor([ 44.3779, 383.8824,  25.1185,   1.1724,  32.2806,   0.0000,  24.2703,
+         30.9804,   6.8038])
+350 sort,  400 20219486 21157527 SAGE
+Server: average latency =  [46.759544372558594, 27.034353256225586] (ms) failures = [0, 0, 0] [31.668556961696595, 24.990143092814833, 30.83951082173735] 4836 4988 15.75092363357544 38754.6787109375
+tensor([ 46.7595, 438.3984,  27.0344,   1.1887,  31.6686,   0.0000,  24.9901,
+         30.8395,   7.0166])
+tensor([  3.0000,  42.8172, 318.2837,  23.6637,   1.1322,  32.2960,   0.0000,
+

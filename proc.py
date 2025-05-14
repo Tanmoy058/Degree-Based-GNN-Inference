@@ -47,7 +47,9 @@ for cnd in cnd_dict.values():
 cnds1 = torch.stack(cnd_list, dim=0)
 print(cnds1)
 
-cnds = torch.stack([cnds0, cnds1], dim=0)
+cnds = torch.empty((2, 5, 4), dtype = torch.long)
+cnds[0,0:cnds0.shape[0],:] = cnds0
+cnds[1,0:cnds1.shape[0],:] = cnds1
 print(cnds.shape)
 print(cnds)
 with open ('cnds_FR_P.pkl', 'wb') as f:
@@ -107,7 +109,9 @@ for cnd in cnd_dict.values():
 cnds1 = torch.stack(cnd_list, dim=0)
 print(cnds1)
 
-cnds = torch.stack([cnds0, cnds1], dim=0)
+cnds = torch.empty((2, 5, 4), dtype = torch.long)
+cnds[0,0:cnds0.shape[0],:] = cnds0
+cnds[1,0:cnds1.shape[0],:] = cnds1
 print(cnds.shape)
 print(cnds)
 with open ('cnds_PA_P.pkl', 'wb') as f:

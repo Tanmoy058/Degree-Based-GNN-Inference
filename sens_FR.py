@@ -29,7 +29,7 @@ NTYPE = "_TYPE"
 NID = "_ID"
 ETYPE = "_TYPE"
 EID = "_ID"
-TIMEOUT = 200
+TIMEOUT = 400
 
 
 
@@ -572,7 +572,7 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
     failure = False
     n1 = 0
     n2 = 0
-    input_features = torch.empty((max(int(chunk_size/4)+ 5000000, 5000000), feats.shape[1]), dtype = feats.dtype, device = 'cuda:0')
+    input_features = torch.empty((max(int(chunk_size/4)+ 4000000, 5000000), feats.shape[1]), dtype = feats.dtype, device = 'cuda:0')
     torch.cuda.synchronize()
     torch.cuda.reset_peak_memory_stats()
     barrier.wait()
@@ -698,7 +698,7 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
         #max_mem[0] = mem_usage[int(len(mem_usage)) - 2]
         avg_lat = ((torch.mean(((response_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
         avg_q = ((torch.mean(((dispatch_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
-        if (e < l/1000):
+        if (e < l/200):
             lat[0] = ((torch.mean(((response_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
             lat[1] = dist[int(dist.shape[0]*(0.99))].to(dtype = torch.float)
             lat[2] = ((torch.mean(((dispatch_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
@@ -936,7 +936,7 @@ def sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual
         if sort:
             #dec = degs - torch.pow(alpha * (time.perf_counter_ns() - T_arr), 1)
             #print(torch.sum(((time.perf_counter_ns() - T_arr) > t_promotion)))
-            dec = degs.clone() - ((time.perf_counter_ns() - T_arr) > t_promotion) * (1024*1024*128)
+            dec = degs.clone() - ((time.perf_counter_ns() - T_arr) > t_promotion) * (1024*1024)
             
         else:
             dec = T_arr
@@ -1270,7 +1270,7 @@ if __name__ == '__main__':
     file_name = 'sens_FR_P.pkl'
     with open(file_name, 'rb') as f:
         cnds = pickle.load(f)
-    bin_path = "dataset/friendster_dgl.bin"
+    bin_path = "../dataset/friendster_dgl.bin"
     g_list, _ = dgl.load_graphs(bin_path)
     graph = g_list[0]
     del g_list
@@ -1283,10 +1283,12 @@ if __name__ == '__main__':
     
     cnds1 = torch.zeros((2, cnds.shape[1], 4), dtype=torch.long)
     #arrival_rates = [100, 300, 340, 380, 480, 530, 550, 560, 570, 580]
-    arrival_rates = [450, 510, 580]
+    arrival_rates = [250, 300, 350, 400, 400]
     res = torch.zeros((len(arrival_rates), 10), dtype = torch.float)
     temp = torch.zeros(cnds.shape[1], 9)
     k = 0
+    for i in range(50):
+        print(cnds[0,i,:])
     for i in range(len(arrival_rates)):
         print('\n')
         avg = []
@@ -1298,9 +1300,10 @@ if __name__ == '__main__':
             cnd = torch.squeeze(cnds[0, k, :])
             chunk_size = int(cnd[1].item())
             opt = cnd[0].item()
-            cache_size = 1.00*(torch.cuda.get_device_properties(0).total_memory) - cnd[2].item()
+            cache_size = 0.96*(torch.cuda.get_device_properties(0).total_memory) - cnd[2].item()
             cache_size = int(cache_size/(feats.shape[1] * feats.element_size()))
             number_of_requests = 100 * arrival_rate
+            print(cache_size)
             if (cache_size > 0) and (j > -1) and (j < cnds.shape[1]):
                 print(arrival_rate, 'sort, ', opt, chunk_size, cache_size, GNN)
                 p = mp.Process(target = main, args = (number_of_requests, arrival_model, arrival_rate, num_layers, opt, True, chunk_size, cache_size, GNN, pipeline, verbose, graph, feats, 10000000, lat))                
@@ -1340,7 +1343,7 @@ if __name__ == '__main__':
         cnds = pickle.load(f)
     GNN = 'GAT'
     #arrival_rates = [20, 40, 60, 70, 80, 90, 100, 110]
-    arrival_rates = [100]
+    arrival_rates = [70]
     res = torch.zeros((len(arrival_rates), 10), dtype = torch.float)
     temp = torch.zeros(cnds.shape[1], 9)
     k = 0
@@ -1348,7 +1351,7 @@ if __name__ == '__main__':
         print('\n')
         avg = []
         tail = []
-        arrival_rate = arrival_rates[i]
+        arrival_rate = arrival_rates[0]
         for j in range(int(cnds.shape[1]/len(arrival_rates))):
             lat[0] = 999999
             lat[1] = 999999

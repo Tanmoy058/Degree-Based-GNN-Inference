@@ -20,6 +20,7 @@ import pickle
 from dgl.convert import create_block
 from torch import cat
 from dgl.transforms import to_block
+import math
 #import utils
 HOST = "127.0.0.1"  # The server's hostname or IP address
 PORT = 65432  # The port used by the server
@@ -29,7 +30,7 @@ NTYPE = "_TYPE"
 NID = "_ID"
 ETYPE = "_TYPE"
 EID = "_ID"
-TIMEOUT = 200
+TIMEOUT = 150
 
 
 
@@ -54,9 +55,6 @@ def client(max_id, number_of_requests, arrival_model, arrival_rate, HOST, PORT, 
         print('Client: Generating the trace ...')
     input_queue = np.zeros(1000000, dtype = np.int64)    
     input_queue[:] = rng.choice(max_id, size = input_queue.shape[0], replace = True)
-    fn = 'PA_load.pkl'
-    with open(fn, 'rb') as f:
-        [input_queue, load] = pickle.load(f)
     input_queue = input_queue[0:number_of_requests]
     request_intervals = np.zeros((CVs.shape[0], number_of_requests))
     for i in range(CVs.shape[0]):
@@ -478,10 +476,10 @@ class MySampler():
             (u,v) = frontier.edges('uv')
         self.hash_ind[u] = True
         self.hash_ind[seeds] = False
-        map_pos = dim1(torch.squeeze(torch.cat((dim1(seeds), dim1(torch.squeeze(torch.nonzero(self.hash_ind)))), dim = 0)))
+        map_pos = torch.squeeze(torch.cat((dim1(seeds), dim1(torch.squeeze(torch.nonzero(self.hash_ind)))), dim = 0))
         self.map[map_pos] = torch.arange(map_pos.shape[0], device = 'cuda:0')
-        u = dim1(self.map[u])
-        v = dim1(self.map[v])
+        u = self.map[u]
+        v = self.map[v]
         block = create_block((u,v), num_src_nodes = map_pos.shape[0], num_dst_nodes = seeds.shape[0])
         block.srcdata[NID] = map_pos
         block.dstdata[NID] = seeds
@@ -492,7 +490,6 @@ class MySampler():
       t1 = time.time()
       self.t_c += t1 - t0
       return block
-        
         
         
         
@@ -518,22 +515,30 @@ def fetch(feats, indices, f0, f1, barrier, bs, be, infer_en):
 
 
 
-def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_times_actual, num_requests, barrier, arrival_order, res, in_degrees, feats, num_layers, opt, sort, chunk_size, cache_size, GNN, verbose, nsz, lat):
+def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_times_actual, num_requests, barrier, arrival_order, res, in_degrees, feats, num_layers, opt, sort, chunking, cache_size, GNN, verbose, nsz, max_mem):
     if verbose:
         print('Server: inference process started.')
     device = 'cuda:0'
     Ts = 0
     Ti = 0
     Tt = 0
-    To = 0
     mem_usage = []
     Time = []
+    if chunking:
+        #chunk_size = 25000
+        chunk_size = opt * (torch.mean(in_degrees.to(dtype = torch.float)).cpu().item())**(num_layers - 2) * 10
+        chunk_size = chunking
+        #print(chunk_size)
+        
+    else:
+        chunk_size = 1000000000000
+    #print('loading features ...')
+    #with open(feats_file_name, 'rb') as f:
+        #feats = pickle.load(f)
     if GNN == 'SAGE':
         model = SAGE2(feats.shape[1],256, 100, num_layers).to(device = 'cuda:0')
-        sampler = MySampler(num_layers, graph, chunk_size = chunk_size, compact_threshold = 1000000)
     elif GNN == 'GAT':
         model = GAT2(feats.shape[1],256, 47, num_layers, 1).to(device = 'cuda:0')
-        sampler = MySampler(num_layers, graph, chunk_size = chunk_size, compact_threshold = 1000000)
     model.eval()
     if not(feats.is_pinned()):
         cudart = torch.cuda.cudart()
@@ -541,47 +546,16 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
     if not(graph.is_pinned()):
         graph.unpin_memory_()
         graph.pin_memory_()
+    #sampler = dgl.dataloading.MultiLayerFullNeighborSampler(2)
+    #sampler = Sampler(num_layers, graph, 'cuda:0', chunk_size = chunk_size)
+    sampler = MySampler(num_layers, graph, chunk_size = chunk_size, compact_threshold = 100000)
+    #cache_size = int((cache_size_GB * 1000000000) / feats.element_size() / feats.shape[1])
+    #cache_size = 35000000
     cache_size = min(cache_size, in_degrees.shape[0])
-    dispatch_times = torch.zeros(input_queue.shape[0], dtype = torch.long)
     if verbose:
         print('Server: opt, chunk size, cache size ', opt, chunk_size, cache_size)
-    in_degs = in_degrees
-    
-    
-    #mtx = graph.adj_tensors('csc')
-    #U = mtx[1]
-    #U = U.to(device='cuda:0')
-    #print('start count')
-    #s = 100000000
-    #p = 0
-    #out_degs = torch.zeros(in_degs.shape[0], dtype=torch.int64)
-    #k=0
-    #while p<U.shape[0]:
-        #(u, f) = torch.unique(U[p:min(p+s, U.shape[0])], return_counts=True)
-        #u = u.cpu()
-        #f = f.cpu()
-        #out_degs[u] = out_degs[u] + f
-        #p += s
-        #gc.collect()
-        #torch.cuda.empty_cache()
-        #k+=1
-    #print('done', out_degs.shape[0])
-    #print(out_degs)
-    #del u
-    #del f
-    #fn = "out_degs_PA.pkl"
-    #with open (fn, 'wb') as f:
-        #pickle.dump(out_degs, f) 
-    
-    
-    fn = "out_degs_PA.pkl"
-    with open(fn, 'rb') as f:
-        out_degs = pickle.load(f)
-        
-    gc.collect()
-    torch.cuda.empty_cache()
-    time.sleep(5)
-    cached_feats = torch.squeeze(torch.sort(out_degs, descending = True)[1][0:cache_size])
+    in_degs = graph.in_degrees()
+    cached_feats = torch.squeeze(torch.sort(in_degs, descending = True)[1][0:cache_size])
     torch.cuda.synchronize()
     _cache_ = feats[cached_feats].to(device = 'cuda:0')
     torch.cuda.synchronize()
@@ -593,45 +567,41 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
     response_times = torch.zeros(input_queue.shape[0], dtype = torch.long)
     err = 0
     e = 0
-    e0 = 0
-    e1 = 0
     pr = 0
     hr = torch.zeros(2, dtype = torch.long) + 1
     failure = False
     n1 = 0
     n2 = 0
-    input_features = torch.empty((max(int(chunk_size/3.5)+ 5000000, 5000000), feats.shape[1]), dtype = feats.dtype, device = 'cuda:0')
+    if chunk_size < 1000000000:
+        input_features = torch.empty((max(int(chunk_size/3.5)+ 5000000, 5000000), feats.shape[1]), dtype = feats.dtype, device = 'cuda:0')
+    else:
+        input_features = torch.empty((15000000, feats.shape[1]), dtype = feats.dtype, device = 'cuda:0')    
     torch.cuda.synchronize()
-    torch.cuda.reset_peak_memory_stats()
     barrier.wait()
-    T_st = time.time()   
+    T_st = time.time()    
     try:
         with torch.no_grad():
             while infer_en[0]:
                 while infer_en[0]:
                     if pointers[0]>pointers[1]:
-                        t0 = time.perf_counter()
-                        sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual, opt, sort, GNN)
-                        t1 = time.perf_counter()
+                        sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual, opt, sort)
                         break
                     if pointers[2] >= (num_requests[0]):
                         infer_en[0] = False
                     time.sleep(0.002)
-                To += t1 - t0
                 torch.cuda.synchronize()
                 t0 = time.perf_counter()
-                
-                #mem_usage.append(m_max)
-                
+                m_max = torch.cuda.max_memory_allocated()
+                mem_usage.append(m_max)
+                torch.cuda.reset_peak_memory_stats()
                 
                 Time.append(time.time() - T_st)
                 p = pointers[2].item()
                 bs = pointers[1].item() - p
-                dispatch_times[p: p + bs] = time.perf_counter_ns()
                     #print('i', p, bs, pointers)
+                seeds = input_queue[p:p + bs]
+                seeds = seeds.clone().to(device = 'cuda:0')
                 try:
-                    seeds = input_queue[p:p + bs]
-                    seeds = seeds.clone().to(device = 'cuda:0')
                     minibatch = sampler.sample_blocks(graph, seeds)
                     cnt = True
                     X = []
@@ -642,9 +612,8 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
                     Ts += t1 - t0
                     for l in range(len(minibatch[2]) - num_layers + 1):
                         torch.cuda.synchronize()
-                        torch.cuda.empty_cache()
                         t1 = time.perf_counter()
-                        if torch.cuda.memory_allocated() > 1024*1024*1024*39:
+                        if torch.cuda.memory_allocated() > 1024*1024*1024*38:
                             gc.collect()
                             torch.cuda.empty_cache()
                         n2 += 1
@@ -669,9 +638,6 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
                         torch.cuda.synchronize()
                         t3 = time.perf_counter()
                         Ti += t3 - t2
-                        #if len(minibatch[2]) - num_layers + 1 > 1:
-                            #gc.collect()
-                            #torch.cuda.empty_cache()
                     if cnt:
                         #if len(lns) > 1:
                             #print(lns)
@@ -684,11 +650,9 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
                         Ti += t3 - t2
                     else:
                         e+= bs
-                        e0 += bs
+                    pr+=bs
                 except:
-                    e += bs
-                    e1 += bs
-                pr+=bs
+                    e+=bs
                 response_times[p: p + bs] = time.perf_counter_ns()
                 pointers[2] = p + bs
                 #print(p+bs)
@@ -699,16 +663,14 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
     except Exception as error_desc:
     #else:
         #print(error_desc)
-        print('failure ', pointers[2], bs, ins.shape[0])
+        print('failure ', pointers[2], bs, ins.shape[0], error_desc)
         failure = True
     #print(Ts, Tt, Ti)
-    if not(failure):
-        l = num_requests[0]
-        l -= 1
-        response_times = response_times[0:l]
-        dispatch_times = dispatch_times[0:l]
-        arrival_times_actual = arrival_times_actual[0:l]
-        dist = torch.sort(((response_times - arrival_times_actual)/1000_000))[0]
+    l = num_requests[0]
+    l -= 1
+    response_times = response_times[0:l]
+    arrival_times_actual = arrival_times_actual[0:l]
+        #dist = torch.bitwise_right_shift(response_times - arrival_times_actual, 20).detach().numpy()
         #print(np.sum(dist<0))
         #for i in range(20):
         #    print(i*5, np.sort(dist)[int(dist.shape[0]*(i*0.05))])
@@ -719,28 +681,13 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
         #    file_name = 'dist_bl.pkl'
         #with open (file_name, 'wb') as f:
         #    pickle.dump(dist, f)
-        #mem_usage.sort()
-        mem_m = torch.cuda.max_memory_allocated()
-        torch.cuda.reset_peak_memory_stats()
+    mem_usage.sort()
         #print('max memory usage = ', mem_usage[int(len(mem_usage)*0.995)])
-        #max_mem[0] = mem_usage[int(len(mem_usage)) - 2]
-        avg_lat = ((torch.mean(((response_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
-        avg_q = ((torch.mean(((dispatch_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
-        if (e < l/1000):
-            lat[0] = ((torch.mean(((response_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
-            lat[1] = dist[int(dist.shape[0]*(0.99))].to(dtype = torch.float)
-            lat[2] = ((torch.mean(((dispatch_times - arrival_times_actual)/1000_000).detach()))).to(dtype = torch.float)
-            lat[3] = To
-            lat[4] = Ts# - sampler.t_c
-            #lat[5] = sampler.t_c
-            lat[6] = Tt
-            lat[7] = Ti
-            lat[8] = l/n2
-            print('Server: average latency = ', [lat[0].item(), avg_q.item()], '(ms) failures =', [e, e0, e1], [Ts, Tt, Ti], n1, n2, sampler.t_c, mem_m/1024/1024)
-        else:
-            lat[0] = 9999999
-            print('failure too many dropped requests. ', l, [e, e0, e1]) 
-            print('Server: average latency = ', lat[0].item(), '(ms) failures =', [e, e0, e1], [Ts, Tt, Ti], n1, n2, sampler.t_c, mem_m/1024/1024)
+    print('Server: average latency = ', int(np.mean(torch.bitwise_right_shift(response_times - arrival_times_actual, 20).detach().numpy())), '(ms) failures =', e, [Ts, Tt, Ti], n1, n2, sampler.t_c)
+    if e>=l/10:
+        failure = True
+    if not(failure):
+        max_mem[0] = mem_usage[int(len(mem_usage)) - 2]
     #print(hr, hr[1].cpu().item()/hr[0].cpu().item())
     
 
@@ -748,230 +695,30 @@ def inference(feats_file_name, input_queue, graph, pointers, infer_en, arrival_t
 
 
         
-def inference_pipeline(feats_file_name, input_queue, graph, pointers, infer_en, arrival_times_actual, num_requests, barrier, arrival_order, res, in_degrees, feats, num_layers, opt, sort, chunking, cache_size, GNN, verbose):
-    if verbose:
-        print('Server: inference process started.')
-    device = 'cuda:0'
-    Ts = 0
-    Ti = 0
-    Tt = 0
-    if chunking == True:
-        #chunk_size = 20000
-        chunk_size = opt * (torch.mean(in_degrees.to(dtype = torch.float)).cpu().item())**(num_layers - 2) * 4
-    else:
-        chunk_size = 100000000
-    n_f = int(opt * (torch.mean(in_degrees.to(dtype = torch.float)).cpu().item())**(num_layers - 1) * 35)
-    n_f = max(6000000, n_f)
-    #print('loading features ...')
-    #with open(feats_file_name, 'rb') as f:
-        #feats = pickle.load(f)
-    if GNN == 'SAGE':
-        model = SAGE(feats.shape[1],256, 100, num_layers).to(device = 'cuda:0')
-    elif GNN == 'GAT':
-        model = GAT(feats.shape[1],256, 47, num_layers, 1).to(device = 'cuda:0')
-    model.eval()
-    if not(feats.is_pinned()):
-        cudart = torch.cuda.cudart()
-        rt = cudart.cudaHostRegister(feats.data_ptr(), feats.numel() * feats.element_size(), 0)
-    if not(graph.is_pinned()):
-        graph.unpin_memory_()
-        graph.pin_memory_()
-    #sampler = dgl.dataloading.MultiLayerFullNeighborSampler(3)
-    sampler = Sampler(num_layers, graph, 'cuda:0', chunk_size = chunk_size)
-    f0 = torch.empty((n_f, feats.shape[1]), device = 'cuda:0', dtype = feats.dtype)
-    f1 = torch.empty((n_f, feats.shape[1]), device = 'cuda:0', dtype = feats.dtype)
-    indices = torch.zeros((n_f),  device = 'cuda:0', dtype = torch.long)
-    f0.share_memory_()
-    f1.share_memory_()
-    indices.share_memory_()
-    cache_size = min(cache_size, in_degrees.shape[0])
-    if verbose:
-        print('Server: opt, chunk size, cache size ', opt, chunk_size, cache_size)
-    in_degs = graph.in_degrees()
-    cached_feats = torch.squeeze(torch.sort(in_degs, descending = True)[1][0:cache_size])
-    torch.cuda.synchronize()
-    _cache_ = feats[cached_feats].to(device = 'cuda:0')
-    torch.cuda.synchronize()
-    cache_meta = torch.zeros(feats.shape[0], device = 'cuda:0', dtype = torch.long) - 1
-    uniq = torch.zeros(feats.shape[0], device = 'cuda:0', dtype = torch.bool)
-    torch.cuda.synchronize()
-    cache_meta[cached_feats] = torch.from_numpy(np.arange(cache_size, dtype = np.int64)).to(device = 'cuda:0')
-    torch.cuda.synchronize()
-    response_times = torch.zeros(input_queue.shape[0], dtype = torch.long)
-    e = 0
-    pr = 0
-    start = True
-    feat_store = [f0,f1]
-    blk_store = [[],[]]
-    i0 = 0
-    i1 = 0
-    i2 = 0
-    i3 = 0
-    BE = mp.Barrier(2)
-    BS = mp.Barrier(2)
-    fetch_proc = mp.Process(target=fetch, args = (feats, indices, f0, f1, barrier, BS, BE, infer_en))
-    fetch_proc.start()
-    barrier.wait()
-    try:
-        with torch.no_grad():
-            while infer_en[0]:
-                if start:
-                    while infer_en[0]:
-                        if pointers[0]>pointers[1]:
-                            sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual, opt, sort)
-                            break
-                        if pointers[2] >= (num_requests[0]):
-                            infer_en[0] = False
-                        time.sleep(0.002)
-                    p = pointers[2].item()
-                    bs = pointers[1].item() - p
-                    #print('i', p, bs, pointers)
-                    seeds = input_queue[p:p + bs]
-                    seeds = seeds.clone().to(device = 'cuda:0')
-                    #torch.cuda.synchronize()
-                    t0 = time.perf_counter()
-                    #torch.cuda.empty_cache()
-                    minibatch = sampler.sample(seeds)
-                    ins = minibatch[0]
-                    inds_data = cache_inds(ins, cache_meta)
-                    minibatch.append(inds_data)
-                    blk_store[i0%2] = minibatch
-                    #torch.cuda.synchronize()
-                    t1 = time.perf_counter()
-                    (ins, plc1, plc1_g, plc2, plc2_c) = blk_store[i0%2][3]
-                    feat_store[i0%2][0:plc2_c.shape[0]] = dgl.utils.gather_pinned_tensor_rows(feats, plc2_c.to(device = 'cuda:0'))
-                    #torch.cuda.synchronize()
-                    t2 = time.perf_counter()
-                    i0 += 1
-                if pointers[0]>pointers[1]:
-                    if not(i0>i1):   
-                        print(i0,i1)
-                    i3 += 1
-                    start = False
-                    sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual, opt, sort)
-                    p = pointers[2].item()
-                    bs = pointers[1].item() - p
-                    #print('i', p, bs, pointers)
-                    seeds = input_queue[p:p + bs]
-                    seeds = seeds.clone().to(device = 'cuda:0')
-                    #torch.cuda.synchronize()
-                    t0 = time.perf_counter()
-                    #torch.cuda.empty_cache()
-                    minibatch = sampler.sample(seeds)
-                    ins = minibatch[0]
-                    inds_data = cache_inds(ins, cache_meta)
-                    minibatch.append(inds_data)
-                    blk_store[i0%2] = minibatch
-                    (ins, plc1, plc1_g, plc2, plc2_c) = inds_data
-                    src = plc2_c
-                    indices[0] = src.shape[0]
-                    indices[1] = i0%2
-                    indices[2:2+src.shape[0]] = src
-                    torch.cuda.synchronize()
-                    t1 = time.perf_counter()
-                    BS.wait()
-                    #feat_store[i0%2][0:blk_store[i0%2][0].shape[0]] = dgl.utils.gather_pinned_tensor_rows(feats, blk_store[i0%2][0].to(device = 'cuda:0'))
-                    #torch.cuda.synchronize()
-                    #t2 = time.perf_counter()
-                    i0 += 1
-                    
-                    
-                    
-                    minibatch = blk_store[i1%2]
-                    (ins, plc1, plc1_g, plc2, plc2_c) = minibatch[3]
-                    blocks = minibatch[2]
-                    input_features = feat_store[i1%2][0:minibatch[0].shape[0]]
-                    i1 += 1
-                    p = pointers[2].item()
-                    bs = minibatch[1].shape[0]
-                    #torch.cuda.empty_cache()
-                    input_features = torch.empty((ins.shape[0], feats.shape[1]), dtype = feats.dtype, device = 'cuda:0')
-                    if plc1.numel():
-                        input_features[plc1] = _cache_[plc1_g]
-                    if plc2.numel():
-                        input_features[plc2] = feat_store[i1%2][0:plc2.shape[0]]
-                    torch.cuda.empty_cache()
-                    preds = model(blocks, input_features)
-                    #out = torch.argmax(preds, dim = 1).detach().cpu()
-                    #res[pr:pr+out.shape[0]] = out
-                    pr+=bs
-                    torch.cuda.synchronize()
-                    response_times[p: p + bs] = time.perf_counter_ns()
-                    pointers[2] = p + bs
-                    t2 = time.perf_counter()
-                    t3 = time.perf_counter()
-                    Ts += t1 - t0
-                    Tt += t2 - t1
-                    Ti += t3 - t2
-                    a = 1
-                    torch.cuda.synchronize()
-                    if pointers[2] >= (num_requests[0]):
-                        infer_en[0] = False
-                    BE.wait()
-                    
-                else:
-                    i2 += 1
-                    start = True
-                    minibatch = blk_store[i1%2]
-                    blocks = minibatch[2]
-                    input_features = feat_store[i1%2][0:minibatch[0].shape[0]]
-                    i1 += 1
-                    p = pointers[2].item()
-                    bs = minibatch[1].shape[0]
-                    torch.cuda.empty_cache()
-                    preds = model(blocks, input_features)
-                    #out = torch.argmax(preds, dim = 1).detach().cpu()
-                    #res[pr:pr+out.shape[0]] = out
-                    pr+=bs
-                    torch.cuda.synchronize()
-                    response_times[p: p + bs] = time.perf_counter_ns()
-                    pointers[2] = p + bs
-                    t3 = time.perf_counter()
-                    Ts += t1 - t0
-                    Tt += t2 - t1
-                    Ti += t3 - t2
-                    a = 1
-                    if verbose:
-                        print(pointers[2].cpu().item())
-                    if pointers[2] >= (num_requests[0]):
-                        infer_en[0] = False
+
     
-        #print(Ts, Tt, Ti, i2, i3)
-        l = num_requests[0]
-        l -= 1
-        response_times = response_times[0:l]
-        arrival_times_actual = arrival_times_actual[0:l]
-        print('Server: average latency = ', int(np.mean(torch.bitwise_right_shift(response_times - arrival_times_actual, 20).detach().numpy())), '(ms) failures =', e)
-        if fetch_proc.is_alive():
-            fetch_proc.terminate()
-    except Exception as error:
-        print('failure', pointers[2].cpu().item(), bs, error)
-        fetch_proc.terminate()
-    
-def sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual, opt, sort, GNN):
+def sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual, opt, sort):
     adapt = True
     alpha = 0.00000001
-    max_window = 100000
+    max_window = 128
     max_bs = 64
     window = min(max_window, pointers[0] - pointers[1])
     seeds = input_queue[pointers[1]:pointers[1]+window]
     degs = in_degrees[seeds]
     T_arr = (arrival_times_actual[pointers[1]: pointers[1] + window])
-    t_promotion = 1000_000_000
-    if GNN == 'GAT':
-        t_promotion = 1000_000_000
+    t_promotion = 40000_000_000
     if True:
-        if sort:
+        if False:
             #dec = degs - torch.pow(alpha * (time.perf_counter_ns() - T_arr), 1)
             #print(torch.sum(((time.perf_counter_ns() - T_arr) > t_promotion)))
-            dec = degs.clone() - ((time.perf_counter_ns() - T_arr) > t_promotion) * (1024*1024)
+            dec = degs - ((time.perf_counter_ns() - T_arr) > t_promotion) * (1024*1024*1024*1024)
             
         else:
             dec = T_arr
         [_, indices] = torch.sort(dec)
         seeds = seeds[indices]
         input_queue[pointers[1]: pointers[1] + window] = seeds
-        degs_q = in_degrees[seeds]
+        degs_q = degs[indices]
         arr = arrival_times_actual[pointers[1]: pointers[1] + window]
         arr = arr[indices]
         arrival_times_actual[pointers[1]: pointers[1] + window] = arr
@@ -988,7 +735,6 @@ def sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual
             if deg_sum >= opt:
                 break
             p += 1
-        #print(p, degs_q[0:min(3, degs_q.shape[0])], degs_q.shape[0])
         p = max(min(degs_q.shape[0], p), 1)
     else:
         p = max(min(degs_q.shape[0], max_bs), 1)
@@ -996,174 +742,11 @@ def sched(pointers, in_degrees, input_queue, arrival_order, arrival_times_actual
 
 
 
-class Sampler():
-    def __init__(
-        self,
-        num_layers,
-        graph,
-        device = 'cuda:0',
-        chunk_size = 50000,
-        ):
-        
-        self.num_layers = num_layers
-        self.device = device
-        self.graph = graph
-        self.sampler = dgl.dataloading.MultiLayerFullNeighborSampler(num_layers - 1)
-        mtx = graph.adj_tensors('csc')
-        U = mtx[1]
-        indptr = mtx[0]
-        indptr_gpu = indptr.to(device = device)
-        if not(U.is_pinned()):
-            dgl.utils.pin_memory_inplace(U)
-        mapping = torch.zeros(graph.number_of_nodes(), dtype = torch.long, device = device)
-        nnz = torch.zeros(graph.number_of_nodes(), dtype = torch.bool, device = device)
-        mapping_local = torch.zeros(graph.number_of_nodes(), dtype = torch.long, device = device)
-        nnz_local = torch.zeros(graph.number_of_nodes(), dtype = torch.bool, device = device)
-        self.U = U
-        self.indptr_gpu = indptr_gpu
-        self.mapping = mapping
-        self.nnz = nnz
-        self.chunk_size = chunk_size
-        self.mapping_local = mapping_local
-        self.nnz_local = nnz_local
-    def sample(self, seed_nodes):
-        blks0 = self.sampler.sample_blocks(self.graph, seed_nodes)
-        seeds = blks0[0]
-        [blk, src] = self.sample_block(seeds)
-        blks = [b for b in blks0[2]]
-        blks.insert(0, blk)
-        return [src, seed_nodes, blks]
-    
-    
-    def sample_block(self, seeds):
-        num_chunks = min(max(1, int(-(-seeds.shape[0]//self.chunk_size))), 50)
-        #print(num_chunks)
-        sz = int((num_chunks + seeds.shape[0])/num_chunks) + 1
-        [u, v, indptr] = dgl.utils.Sample(self.U, self.indptr_gpu, seeds, num_threads = torch.tensor([1024], dtype = torch.long))
 
-        #self.nnz[u] = True
-        #self.nnz[seeds] = True
-        #nz = torch.cat((seeds, torch.squeeze(torch.nonzero(self.nnz))))
-        #nz = torch.squeeze(torch.nonzero(self.nnz))
-        #self.mapping[nz] = torch.arange(nz.shape[0], device = self.device)
-        #ut = self.mapping[u]
-        #vt = self.mapping[v]
-        #blk = dgl.create_block(('csc', (indptr, ut, torch.arange(ut.shape[0], dtype = torch.long, device = self.device))))
-        #torch.cuda.synchronize()
-        #t0 = time.time()
-        blk = []
-        p_s = 0
-        outs = [0]
-        #print(u.shape[0], indptr[-1], num_chunks)
-        u = dim1(u)
-        seeds = dim1(seeds)
-        if num_chunks == 1:
-            self.nnz[u] = True
-            self.nnz[seeds] = False
-            nz = torch.cat((seeds, dim1(torch.squeeze(torch.nonzero(self.nnz)))))
-            self.mapping[nz] = torch.arange(nz.shape[0], device = self.device)
-            ut = self.mapping[u]
-            vt = self.mapping[v]
-            blk0 = dgl.create_block((ut, vt), num_dst_nodes = seeds.shape[0], num_src_nodes = nz.shape[0])
-            blk0 = (blk0, torch.arange(nz.shape[0], device = self.device))
-            blk.append(blk0)
-            torch.cuda.synchronize() 
-            outs.append(seeds.shape[0])          
-        else:
-            self.nnz[u] = True
-            self.nnz[seeds] = True
-            nz = torch.squeeze(torch.nonzero(self.nnz))
-            self.mapping[nz] = torch.arange(nz.shape[0], device = self.device)
-            for i in range(num_chunks):
-                p_e = min(p_s + sz, seeds.shape[0])
-                e_s = indptr[p_s]
-                e_e = indptr[p_e]
-                ui = u[e_s:e_e]
-                vi = v[e_s:e_e]
-                seeds_local = seeds
-                self.nnz_local[ui] = True
-                self.nnz_local[seeds_local] = False
-                nz_local = torch.cat((dim1(seeds_local), dim1(torch.squeeze(torch.nonzero(self.nnz_local)))))
-                self.mapping_local[nz_local] = torch.arange(nz_local.shape[0], device = self.device)
-                u[e_s:e_e] = self.mapping_local[ui]
-                v[e_s:e_e] = self.mapping_local[vi]
-                ui = u[e_s:e_e]
-                vi = v[e_s:e_e]
-                blk_i = dgl.create_block((ui, vi), num_dst_nodes = seeds_local.shape[0], num_src_nodes = nz_local.shape[0])
-                blk.append((blk_i, self.mapping[nz_local]))
-                p_s = p_e
-                outs.append(p_s)
-                self.nnz_local[nz_local] = False
-                self.mapping_local[nz_local] = 0
-            
-        #torch.cuda.synchronize()
-        #t1 = time.time()
-        #print(int(1000*(t1-t0)))
-        src = nz
-        self.nnz[nz] = False
-        blk.append(outs)
-        return [blk, src]      
-
-
-
-
-
-
-  
-def scheduler(infer_en, pointers, in_degrees, input_queue, max_bs, max_window, opt, arrival_times_actual, sort, adapt, barrier, arrival_order):
-    print('scheduler started.')
-    T = 0
-    barrier.wait()
-    while infer_en[0]:
-        while infer_en[0]:
-            if ((pointers[0] > pointers[1]) and (pointers[2] >= pointers[1])):
-                break
-            time.sleep(0.001)
-        if not(infer_en[0]):
-            break
-        t0 = time.time()
-        window = min(max_window, pointers[0] - pointers[1])
-        seeds = input_queue[pointers[1]:pointers[1]+window]
-        degs = in_degrees[seeds]
-        if sort:
-            dec = degs
-            [_, indices] = torch.sort(dec)
-            seeds = seeds[indices]
-            input_queue[pointers[1]: pointers[1] + window] = seeds
-            degs_q = degs[indices]
-            arr = arrival_times_actual[pointers[1]: pointers[1] + window]
-            arr = arr[indices]
-            arrival_times_actual[pointers[1]: pointers[1] + window] = arr
-            o = arrival_order[indices + pointers[1]]
-            arrival_order[pointers[1]: pointers[1] + window] = o
-        else:
-            degs_q = degs
-        if adapt:
-            p = 0
-            deg_sum = 0
-            step_size = 8
-            #for step in range(math.ceil(degs_q.shape[0]/step_size)):
-                #deg_sum += torch.sum(degs_q[p:min(p+step_size, degs_q.shape[0])])
-                #if deg_sum > opt:
-                    #break
-                #p += step_size
-            for step in range(degs_q.shape[0]):
-                deg_sum += degs_q[step]
-                if deg_sum >= opt:
-                    break
-                p += 1
-            p = max(min(degs_q.shape[0], p), 1)
-        else:
-            p = max(min(degs_q.shape[0], max_bs), 1)
-        pointers[1] = pointers[1] + p
-        T += time.time() - t0
-        #print('s', p, pointers[1].item())
-    print('schedule = ', T)
-
-def main(number_of_requests, arrival_model, arrival_rate, num_layers, opt, sort, chunking, cache_size, GNN, pipeline, verbose, graph, feats, nsz, lat):
+def main(number_of_requests, arrival_model, arrival_rate, num_layers, opt, sort, chunking, cache_size, GNN, pipeline, verbose, graph, feats, nsz, max_mem):
     use_mps = pipeline
     graph_name = 'ogbn-papers100M'
-    lat.share_memory_()
+    max_mem.share_memory_()
     pct = [70]
     if verbose:
         print('\n', arrival_model, arrival_rate, num_layers, opt, sort, chunking, GNN)
@@ -1237,7 +820,7 @@ def main(number_of_requests, arrival_model, arrival_rate, num_layers, opt, sort,
     if pipeline:
         inference_process = mp.Process(target = inference_pipeline, args = (file_name, input_queue, graph, pointers, infer_en, arrival_times_actual, num_requests, barrier, arrival_order, res, in_degrees, feats, num_layers, opt, sort, chunking, cache_size, GNN, verbose))
     else:
-        inference_process = mp.Process(target = inference, args = (file_name, input_queue, graph, pointers, infer_en, arrival_times_actual, num_requests, barrier, arrival_order, res, in_degrees, feats, num_layers, opt, sort, chunking, cache_size, GNN, verbose, nsz, lat))       
+        inference_process = mp.Process(target = inference, args = (file_name, input_queue, graph, pointers, infer_en, arrival_times_actual, num_requests, barrier, arrival_order, res, in_degrees, feats, num_layers, opt, sort, chunking, cache_size, GNN, verbose, nsz, max_mem))       
     client_process = mp.Process(target = client, args = (max_id, number_of_requests, arrival_model, arrival_rate, HOST, PORT, WIDTH, LAST, verbose))
 
 
@@ -1261,11 +844,6 @@ def main(number_of_requests, arrival_model, arrival_rate, num_layers, opt, sort,
                 a = 1
         elif not(request_handler_process.is_alive()) and not(inference_process.is_alive()):
             break
-        elif request_handler_process.is_alive():
-            try:
-                request_handler_process.terminate()
-            except:
-                a = 1
         else:
             time.sleep(3)
     request_handler_process.join()
@@ -1295,120 +873,83 @@ if __name__ == '__main__':
     num_trials = 5
     pipeline = False
     graph_name = 'ogbn-papers100M'
-    file_name = 'sens_PA_P.pkl'
+    file_name = '../pcts_PA_P.pkl'
     with open(file_name, 'rb') as f:
-        cnds = pickle.load(f)
+        pcts = pickle.load(f)
     file_name = '../dataset/PA.pkl'
     with open(file_name, 'rb') as f:
         [graph_a, feats] = pickle.load(f)
     graph = graph_a.formats(formats = 'csc')
     del graph_a
     gc.collect()
-    lat = torch.zeros(9, dtype = torch.float)
-    lat.share_memory_()
-   
     
-    cnds1 = torch.zeros((2, cnds.shape[1], 4), dtype=torch.long)
-    #arrival_rates = [100, 300, 340, 380, 480, 530, 550, 560, 570, 580]
-    arrival_rates = [200]
-    res = torch.zeros((len(arrival_rates), 10), dtype = torch.float)
-    temp = torch.zeros(cnds.shape[1], 9)
-    k = 0
-    for i in range(len(arrival_rates)):
-        print('\n')
-        avg = []
-        tail = []
-        arrival_rate = arrival_rates[0]
-        for j in range(int(cnds.shape[1]/len(arrival_rates))):
-            lat[0] = 999999
-            lat[1] = 999999
-            cnd = torch.squeeze(cnds[0, k, :])
-            chunk_size = int(cnd[1].item())
-            opt = cnd[0].item()
-            cache_size = 0.96*(torch.cuda.get_device_properties(0).total_memory) - cnd[2].item()
-            cache_size = int(cache_size/(feats.shape[1] * feats.element_size()))
-            number_of_requests = 100 * arrival_rate
-            if (cache_size > 0) and (j > -1) and (j < cnds.shape[1]):
-                print(arrival_rate, 'sort, ', opt, chunk_size, cache_size, GNN)
-                p = mp.Process(target = main, args = (number_of_requests, arrival_model, arrival_rate, num_layers, opt, True, chunk_size, cache_size, GNN, pipeline, verbose, graph, feats, 10000000, lat))                
+    number_of_requests = 5000
+    opts = list(pcts.keys())
+    cnds = torch.zeros((2,6, 3), dtype = torch.long)
+    max_mem = torch.zeros(1, dtype = torch.long)
+    max_mem.share_memory_()
+    base_config = [150, 200, 1000000, False, 5000000, 10500000]
+    j = 0
+    for i in range(0,1):
+        for k in range(6):
+            #pct_tar = 0.75 + 0.02*k
+            max_mem[0] = 999999999999
+            config = [base_config[i] for i in range(len(base_config))]
+            opt = 200
+            #pcts_i = pcts[opt]
+            chunk_size = int((0.50+0.25*k)*12099471)
+            config[1] = opt
+            config[4] = chunk_size
+            print(config)
+            try:
+                p = mp.Process(target = main, args = (number_of_requests, arrival_model, config[0], num_layers, config[1], config[3], config[4], config[2], GNN, pipeline, verbose, graph, feats, config[5], max_mem))
                 p.start()
                 p.join()
-                print(lat)
-                a = 0
-            cnds1[0, k, 0] = int(opt)
-            cnds1[0, k, 1] = int(chunk_size)
-            cnds1[0, k, 2] = int(cnd[2].item())
-            cnds1[0, k, 3] = int(lat[0].item()*1000)
-            #temp[k,:] = lat[:]
-            #avg.append(lat[0].item())
-            #tail.append(lat[1].item())
-            k += 1
-            #
-        #avg = np.array(avg)
-        #argmin = np.argmin(avg)
-        #res[i, 0] = argmin
-        #res[i, 1:] = temp[argmin,:]
-        #print(res[i])
-    file_name = "cnds_PA_P_SAGE.pkl"
-    with open (file_name, 'wb') as f:
-        pickle.dump(cnds1, f) 
-            
-            
-            
-            
-            
-            
-            
-
- 
-    print('\n\n\n')
-    file_name = 'sens_PA_P.pkl'
-    with open(file_name, 'rb') as f:
-        cnds = pickle.load(f)
+            except:
+                print(fail)
+            print('max memory usage = ', max_mem[0])
+            cnds[0,j,0] = opt
+            cnds[0,j,1] = chunk_size
+            cnds[0,j,2] = max_mem[0]
+            j += 1
+    with open ('th_PA_P.pkl', 'wb') as f:
+        pickle.dump(cnds, f)         
+        
     GNN = 'GAT'
-    #arrival_rates = [20, 40, 60, 70, 80, 90, 100, 110]
-    arrival_rates = [30]
-    res = torch.zeros((len(arrival_rates), 10), dtype = torch.float)
-    temp = torch.zeros(cnds.shape[1], 9)
-    k = 0
-    for i in range(len(arrival_rates)):
-        print('\n')
-        avg = []
-        tail = []
-        arrival_rate = arrival_rates[0]
-        for j in range(int(cnds.shape[1]/len(arrival_rates))):
-            lat[0] = 999999
-            lat[1] = 999999
-            cnd = torch.squeeze(cnds[1, k, :])
-            chunk_size = int(cnd[1].item())
-            opt = cnd[0].item()
-            cache_size = 0.93*(torch.cuda.get_device_properties(0).total_memory) - cnd[2].item()
-            cache_size = int(cache_size/(feats.shape[1] * feats.element_size()))
-            number_of_requests = 100 * arrival_rate
-            if (cache_size > 0) and (j > -1) and (j < cnds.shape[1]):
-                print(arrival_rate, 'sort, ', opt, chunk_size, cache_size, GNN)
-                p = mp.Process(target = main, args = (number_of_requests, arrival_model, arrival_rate, num_layers, opt, True, chunk_size, cache_size, GNN, pipeline, verbose, graph, feats, 10000000, lat))                
+    j = 0
+    base_config = [35, 200, 1000000, False, 5000000, 10500000]
+    for i in range(0,1):
+        for k in range(6):
+            pct_tar = 0.96 + 0.0030*k
+            max_mem[0] = 999999999999
+            config = [base_config[i] for i in range(len(base_config))]
+            opt = 100
+            #pcts_i = pcts[opt]
+            chunk_size = int((0.40+0.30*k)*19043024)
+            config[1] = opt
+            config[4] = chunk_size
+            print(config)
+            try:
+                p = mp.Process(target = main, args = (number_of_requests, arrival_model, config[0], num_layers, config[1], config[3], config[4], config[2], GNN, pipeline, verbose, graph, feats, config[5], max_mem))
                 p.start()
                 p.join()
-                print(lat)
-                a = 0
-            cnds1[1, k, 0] = int(opt)
-            cnds1[1, k, 1] = int(chunk_size)
-            cnds1[1, k, 2] = int(cnd[2].item())
-            cnds1[1, k, 3] = int(lat[0].item()*1000)
-            #temp[k,:] = lat[:]
-            #avg.append(lat[0].item())
-            #tail.append(lat[1].item())
-            k += 1
-            #
-        #avg = np.array(avg)
-        #argmin = np.argmin(avg)
-        #res[i, 0] = argmin
-        #res[i, 1:] = temp[argmin,:]
-        #print(res[i])
-    file_name = "cnds_PA_P_GAT.pkl"
-    with open (file_name, 'wb') as f:
-        pickle.dump(cnds1, f) 
+            except:
+                print(fail)
+            print('max memory usage = ', max_mem[0])
+            cnds[1,j,0] = opt
+            cnds[1,j,1] = chunk_size
+            cnds[1,j,2] = max_mem[0]
+            j += 1
+    with open ('th_PA_P.pkl', 'wb') as f:
+        pickle.dump(cnds, f)         
+        
+        
+            
+       
+
+            
+       
+
             
             
 

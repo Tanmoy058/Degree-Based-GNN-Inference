@@ -845,10 +845,10 @@ if __name__ == '__main__':
     num_trials = 5
     pipeline = False
     graph_name = 'friendster'
-    file_name = 'pcts_FR_P.pkl'
+    file_name = '../pcts_FR_P.pkl'
     with open(file_name, 'rb') as f:
         pcts = pickle.load(f)
-    bin_path = "dataset/friendster_dgl.bin"
+    bin_path = "../dataset/friendster_dgl.bin"
     g_list, _ = dgl.load_graphs(bin_path)
     graph = g_list[0]
     del g_list
@@ -859,12 +859,12 @@ if __name__ == '__main__':
     
     number_of_requests = 5000
     opts = list(pcts.keys())
-    cnds = torch.zeros((2,30, 3), dtype = torch.long)
+    cnds = torch.zeros((2,50, 3), dtype = torch.long)
     max_mem = torch.zeros(1, dtype = torch.long)
     max_mem.share_memory_()
     base_config = [300, 200, 1000000, False, 5000000, 10500000]
     j = 0
-    for i in range(2,5):
+    for i in range(0,5):
         for k in range(10):
             pct_tar = 0.75 + 0.020*k
             max_mem[0] = 999999999999
@@ -874,25 +874,25 @@ if __name__ == '__main__':
             chunk_size = int(pcts_i[int(pct_tar*int(pcts_i.shape[0]))])
             config[1] = opt
             config[4] = chunk_size
-            #print(config)
-            #try:
-                #p = mp.Process(target = main, args = (number_of_requests, arrival_model, config[0], num_layers, config[1], config[3], config[4], config[2], GNN, pipeline, verbose, graph, feats, config[5], max_mem))
-                #p.start()
-                #p.join()
-            #except:
-                #print(fail)
-            #print('max memory usage = ', max_mem[0])
+            print(config)
+            try:
+                p = mp.Process(target = main, args = (number_of_requests, arrival_model, config[0], num_layers, config[1], config[3], config[4], config[2], GNN, pipeline, verbose, graph, feats, config[5], max_mem))
+                p.start()
+                p.join()
+            except:
+                print(fail)
+            print('max memory usage = ', max_mem[0])
             cnds[0,j,0] = opt
             cnds[0,j,1] = chunk_size
             cnds[0,j,2] = max_mem[0]
             j += 1
-    #with open ('sens_FR_P.pkl', 'wb') as f:
-        #pickle.dump(cnds, f)         
+    with open ('sens_FR_P.pkl', 'wb') as f:
+        pickle.dump(cnds, f)         
         
     GNN = 'GAT'
-    base_config = [70, 200, 1000000, False, 5000000, 10500000]
+    base_config = [90, 200, 1000000, False, 5000000, 10500000]
     j = 0
-    for i in range(1,4):
+    for i in range(0,5):
         for k in range(10):
             pct_tar = 0.96 + 0.0030*k
             max_mem[0] = 999999999999
